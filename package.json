@@ -1,0 +1,39 @@
+{
+  "name": "nwserial",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "nw-react-scripts": "2.0.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "scripts": {
+    "start": "nw-react-scripts start",
+    "build": "nw-react-scripts build",
+    "test": "nw-react-scripts test",
+    "eject": "nw-react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "nw-react-app"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ],
+  "main": "index.html",
+  "nwBuilder": {
+    "//": "https://github.com/nwjs-community/nw-builder",
+    "platforms": [
+      "osx64",
+      "win32",
+      "win64"
+    ],
+    "version": "latest",
+    "flavor": "normal",
+    "buildDir": "./build",
+    "cacheDir": "./cache",
+    "macIcns": "./src/logo.icns"
+  }
+}
