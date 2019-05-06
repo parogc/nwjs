@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+import TimeCreator from './components/timecreator'
 
 class App extends Component {
   constructor(props){
@@ -9,7 +9,9 @@ class App extends Component {
       ports: [],
       selected  : '',
       connected: undefined,
-      linesReceived: ''
+      linesReceived: '',
+        string : '',
+        rounds: 0
     }
   }
   componentDidMount() {
@@ -31,9 +33,15 @@ class App extends Component {
 
   onReceive = (info) =>{
     console.log(this.ab2str(info.data) );
-    const newLines = this.state.linesReceived + this.ab2str(info.data);
+    const newLines = this.state.linesReceived +"\n"+ this.ab2str(info.data);
     this.setState({
       linesReceived: newLines
+    })
+  };
+
+  deleteText = (info) =>{
+    this.setState({
+      linesReceived: ""
     })
   };
 
@@ -62,8 +70,8 @@ class App extends Component {
      return String.fromCharCode.apply(null, new Uint8Array(buf));
    }
 
-  send=()=>{
-    chrome.serial.send(this.state.connected, this.str2ab(this.state.text), (sendInfo)=>{
+  send=(string)=>{
+    chrome.serial.send(this.state.connected, this.str2ab(string+"\n"), (sendInfo)=>{
       console.log(sendInfo)
     })
   }
@@ -77,7 +85,7 @@ class App extends Component {
          });
        });
      }else{
-       chrome.serial.connect(this.state.selected, {bitrate: 115200},  (info) => {
+       chrome.serial.connect(this.state.selected, {bitrate: 9600},  (info) => {
          this.setState({
            connected: info.connectionId
          });
@@ -85,6 +93,25 @@ class App extends Component {
        });
      }
 
+   };
+
+   lines= (e)=>{
+       console.log(e);
+this.setState({
+    string: e
+})};
+
+   run = () => {
+       let string = this.state.string + 'R;'+this.state.rounds+'^'+this.state.rounds;
+
+       console.log(string);
+       this.send(string);
+   };
+
+   changeRounds =(e)=>{
+       this.setState({
+           rounds : e.target.value
+       })
    };
 
   render() {
@@ -108,6 +135,12 @@ class App extends Component {
                   {this.state.linesReceived}<br/>
                 </span>
         </div>
+          <button onClick={this.deleteText} > Delete text </button>
+          <button onClick={this.deleteText} > Delete text </button>
+            <TimeCreator lines={this.lines}/>
+            <input type={'text'} onChange={this.changeRounds}/>
+          <button onClick={this.run} > run </button>
+
       </div>
     );
   }
