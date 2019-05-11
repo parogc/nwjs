@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-
+import './style.css'
 class TimeCreator extends Component {
     constructor(props){
         super(props);
@@ -8,13 +8,33 @@ class TimeCreator extends Component {
         }
     }
 
+
+    componentWillReceiveProps(nextProps){
+
+        console.log(nextProps.struc);
+        if(!!nextProps.struc){
+
+            this.setState({
+                devices: nextProps.struc
+            })
+        }
+
+
+    }
     addDevice = () => {
         let devices = this.state.devices;
-        devices.push({actions:[], pin: undefined, type: undefined});
+        devices.push({actions:[], pin: undefined, type: 'C'});
         this.setState({
             devices
         })
-        this.generateLines()
+
+    };
+    removeDevice = (i) => {
+        let devices = this.state.devices;
+        devices.splice(i, 1);
+        this.setState({
+            devices
+        });
 
     };
 
@@ -24,7 +44,6 @@ class TimeCreator extends Component {
         this.setState({
             devices
         })
-        this.generateLines()
 
     };
 
@@ -34,7 +53,6 @@ class TimeCreator extends Component {
         this.setState({
             devices
         })
-        this.generateLines()
 
     };
     changeDeviceType = (e, device) => {
@@ -43,7 +61,6 @@ class TimeCreator extends Component {
         this.setState({
             devices
         })
-        this.generateLines()
 
     };
 
@@ -53,7 +70,15 @@ class TimeCreator extends Component {
         this.setState({
             devices
         })
-        this.generateLines()
+
+    };
+
+    removeAction = (device, action) => {
+        let devices = this.state.devices;
+        devices[device].actions.splice(action, 1);
+        this.setState({
+            devices
+        });
 
     };
 
@@ -63,66 +88,58 @@ class TimeCreator extends Component {
         this.setState({
             devices
         })
-        this.generateLines()
+
     };
 
-    generateLines = () => {
-        let string = 'X\n'
-        let checksum = 0;
-
-        this.state.devices.forEach((device)=>{
-            let command = 'S';
-            let type = device.type;
-            let pin = device.pin;
-
-            let actionString = '';
-            device.actions.forEach((action)=>{
-                let delay = action.delay;
-                let duration = action.duration;
-
-                actionString += ';'+delay+'|'+duration;
-                checksum = parseInt(checksum)+parseInt(delay)+parseInt(duration);
-            });
-
-            string += command + ';'+ pin +';'+ type + actionString + '^'+checksum+'\n';
-        });
-        this.props.lines(string);
-    };
+    
 
     render() {
+        console.log(this.state.devices);
         return (
             <div className="timecreator">
-               <button onClick={this.addDevice}> ADD DEVICE </button>
-                <div>
+                <div id={'row'}>
                     {this.state.devices.map((device, i)=>{
                         return(
-                                <div key={i}>
-                            device {i}
-                            type:         <select onChange={(e)=>this.changeDeviceType(e, i)}>
-                                    <option value={'F'}>Flash</option>
-                                    <option value={'V'}>Valve</option>
-                                    <option value={'C'}>Camera</option>
-                                    <option value={'B'}>Button</option>
-                                </select>
-                                {device.actions.map((action, j)=>{
-                                        return(
-                                            <div key={i+''+j}>
-                                                <input type={'text'} value={action.delay} onChange={(e)=>this.changeActionDelay(e, i, j)}/>
-                                                <input type={'text'} value={action.duration} onChange={(e)=>this.changeActionDuration(e, i, j)}/>
+                            <div className={'items'} key={i}>
+                                  <div className={'deviceForm'}>
+                                      device {i}
+                                    type:
+                                   <select value={device.type} onChange={(e)=>this.changeDeviceType(e, i)}>
+                                        <option value={'F'}>Flash</option>
+                                        <option value={'V'}>Valve</option>
+                                        <option value={'C'}>Camera</option>
+                                        <option value={'B'}>Button</option>
+                                   </select></div>
+                                        <div className={'container'}>
+
+                                        {device.actions.map((action, j)=>{
+                                            return(
+                                                    <div className={'row actionLine'}  key={i+''+j}>
+                                                        <input type={'text'} className="form-control col-5" value={action.delay} onChange={(e)=>this.changeActionDelay(e, i, j)}/>
+                                                        <input type={'text'} className="form-control col-5" value={action.duration} onChange={(e)=>this.changeActionDuration(e, i, j)}/>
+                                                        <button className={'btn btn-primary col-2'} onClick={()=>this.removeAction(i, j)}>X</button>
+                                                    </div>
+                                            )
+
+                                        })}
+                                        </div>
+
+                                        <div className={'deviceButtons container '}>
+                                            <div className={'row'} style={{textAlign: 'center'}}>
+                                        <button className={'btn btn-primary col-12'} onClick={()=>this.addAction(i)}>ADD ACTION</button>
+                                        <button className={'btn btn-primary col-12'} onClick={()=>this.removeDevice(i)}> REMOVE DEVICE </button>
+                                                <label style={{textAlign: 'center', width: '100%'}}> Pin Number </label>
+                                                <input type={'text'} className="form-control col-12" value={device.pin} onChange={(e)=>this.changeDevicePin(e, i)}/>
                                             </div>
-                                        )
-
-                                    })}
-                                    <button onClick={()=>this.addAction(i)}>ADD ACTION</button>
-                                    <input type={'text'} value={device.pin} onChange={(e)=>this.changeDevicePin(e, i)}/>
-                                </div>
-                            )
-
+                                        </div>
+                            </div>
+                        )
                     })}
-
-                    <button onClick={this.generateLines}>generateLines</button>
-
+                    <div>
+                        {/*<button className={'btn btn-primary'}  onClick={this.generateLines}>generateLines</button>*/}
+                    </div>
                 </div>
+                <button className={'btn btn-primary'} onClick={this.addDevice}> ADD DEVICE </button>
             </div>
         );
     }

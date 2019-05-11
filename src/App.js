@@ -1,31 +1,67 @@
 import React, { Component } from 'react';
 import './App.css';
 import TimeCreator from './components/timecreator'
-
+import fdialogs from 'node-webkit-fdialogs';
 class App extends Component {
   constructor(props){
     super(props);
+
+
     this.state={
       ports: [],
       selected  : '',
       connected: undefined,
       linesReceived: '',
         string : '',
-        rounds: 0
+        rounds: 1,
+        roundDelay: 0,
+        struc: []
     }
   }
   componentDidMount() {
-    chrome.serial.getDevices((ports)=> {
-      this.setState({
-        ports
-      })
-    });
+    this.updateDevices();
 
     chrome.serial.onReceive.addListener(this.onReceive);
     chrome.serial.onReceiveError.addListener(this.onError);
 
 
+      var menu = new nw.Menu({type: 'menubar'});
+
+// Create a submenu as the 2nd level menu
+      var submenu = new nw.Menu();
+
+      submenu.append(new nw.MenuItem({
+          label: 'Guardar' ,
+          click: ()=> {
+              this.save()
+          },
+          key: "s",
+          modifiers: "ctrl+s"}));
+      submenu.append(new nw.MenuItem({ label: 'Cargar', click: ()=> {
+              this.load()
+          },
+          key: "l",
+          modifiers: "ctrl+l" }));
+
+// Create and append the 1st level menu to the menubar
+      menu.append(new nw.MenuItem({
+          label: 'First Menu',
+          submenu: submenu
+      }));
+
+// Assign it to `window.menu` to get the menu displayed
+      nw.Window.get().menu = menu;
+
+
   }
+
+  updateDevices =()=>{
+      chrome.serial.getDevices((ports)=> {
+          this.setState({
+              ports
+          })
+      });
+};
 
   onError = (info) =>{
     console.log(info)
@@ -95,16 +131,46 @@ class App extends Component {
 
    };
 
+    generateLines = () => {
+        let string = 'X\n';
+
+        this.state.struc.forEach((device)=>{
+            let checksum = 0;
+
+            let command = 'S';
+            let type = device.type;
+            let pin = device.pin;
+
+            let actionString = '';
+            device.actions.forEach((action)=>{
+                let delay = action.delay;
+                let duration = action.duration;
+
+                actionString += ';'+delay+'|'+duration;
+                checksum = parseInt(checksum)+parseInt(delay)+parseInt(duration);
+            });
+
+            string += command + ';'+ pin +';'+ type + actionString + '^'+checksum+'\n';
+        });
+
+
+        return(string);
+    };
+
    lines= (e)=>{
        console.log(e);
 this.setState({
     string: e
 })};
+    json= (e)=>{
+        console.log(e);
+        this.setState({
+            structure: e
+        })};
 
    run = () => {
-       let string = this.state.string + 'R;'+this.state.rounds+'^'+this.state.rounds;
+       let string = this.generateLines() + 'R;'+this.state.rounds+';'+this.state.roundDelay+'^'+(parseInt(this.state.rounds, 10)+parseInt(this.state.roundDelay, 10));
 
-       console.log(string);
        this.send(string);
    };
 
@@ -113,34 +179,69 @@ this.setState({
            rounds : e.target.value
        })
    };
+    changeRoundDelay =(e)=>{
+       this.setState({
+           roundDelay : e.target.value
+       })
+   };
+
+    load = () => {
+
+        fdialogs.readFile( (err, data, path)=> {
+            this.setState({
+                struc: JSON.parse(data)
+            })
+        })
+    };
+
+    save = () => {
+        let content = new Buffer(JSON.stringify(this.state.struc), 'utf-8');
+        fdialogs.saveFile(content, function (err, path) {
+
+        });
+    };
 
   render() {
     return (
       <div className="App">
-        <select onChange={this.onChange}>
-          {this.state.ports.map((port)=>{
-            return(
-              <option selected={this.state.selected === port.path} value={port.path}>{port.path}</option>
-            )
-          })}
-        </select>
-        <button onClick={this.connect}>{!!this.state.connected ? 'Deconectar' : 'Conectar'}</button>
-        <textarea onChange={this.onChangeText} value={this.state.text}>
+          <div className={'topContainer'}>
+              <div className={'row'}>
+                  <div className={'col-4'} >
+                  <select className={'selectDevice col-12'} onChange={this.onChange}>
+                      {this.state.ports.map((port)=>{
+                        return(
+                          <option selected={this.state.selected === port.path} value={port.path}>{port.path}</option>
+                        )
+                      })}
+                  </select></div>
+                  <div className={'col-3'} >
+                  <button className={'btn btn-primary'} onClick={this.updateDevices}>Actualizar</button>
+                  <button className={!!this.state.connected ? 'btn btn-danger' : 'btn btn-primary'} onClick={this.connect}>{!!this.state.connected ? 'Desconectar' : 'Conectar'}</button>
+              </div></div>
+</div>
 
-        </textarea>
-        <button onClick={this.send} disabled={!this.state.connected}> Send </button>
+           <button className={'btn btn-primary'} onClick={this.deleteText} > Delete text </button>
+            <div className={'timeContainer'}>
 
-        <div>
-                <span>
-                  {this.state.linesReceived}<br/>
-                </span>
-        </div>
-          <button onClick={this.deleteText} > Delete text </button>
-          <button onClick={this.deleteText} > Delete text </button>
-            <TimeCreator lines={this.lines}/>
-            <input type={'text'} onChange={this.changeRounds}/>
-          <button onClick={this.run} > run </button>
+                    <TimeCreator struc={this.state.struc} json={this.json}
+                                 lines={this.lines}/>
 
+            </div>
+            <div className={'footerContainer row'}>
+                <div className={'col-6'}>
+                    <textarea disabled={true} style={{width: '100%', height: '100%'}}>
+                      {this.state.linesReceived}
+                    </textarea>
+                </div>
+                <div className={'col-6'}>
+                    <label>Rondas</label>
+                    <input className="form-control col-4 offset-4" value={this.state.rounds} type={'text'} onChange={this.changeRounds}/>
+                    <label>Delay</label>
+                    <input className="form-control col-4 offset-4" value={this.state.roundsDelay}  type={'text'} onChange={this.changeRoundDelay}/>
+                    <button className={'btn btn-primary col-4'}  onClick={this.run} > Ejecutar </button>
+                </div>
+
+            </div>
       </div>
     );
   }
