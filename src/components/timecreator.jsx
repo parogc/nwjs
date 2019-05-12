@@ -11,7 +11,6 @@ class TimeCreator extends Component {
 
     componentWillReceiveProps(nextProps){
 
-        console.log(nextProps.struc);
         if(!!nextProps.struc){
 
             this.setState({
@@ -94,7 +93,6 @@ class TimeCreator extends Component {
     
 
     render() {
-        console.log(this.state.devices);
         return (
             <div className="timecreator">
                 <div id={'row'}>

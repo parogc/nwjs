@@ -7,19 +7,30 @@ class App extends Component {
     super(props);
 
 
+      this.textLog = React.createRef();
+
+
     this.state={
       ports: [],
-      selected  : '',
       connected: undefined,
       linesReceived: '',
         string : '',
+        sending: false,
+        running: false,
         rounds: 1,
         roundDelay: 0,
         struc: []
     }
+
+      if(!!localStorage.getItem('selectedPort')){
+          this.state.selected = localStorage.getItem('selectedPort')
+      }
+
   }
   componentDidMount() {
     this.updateDevices();
+
+    this.connect();
 
     chrome.serial.onReceive.addListener(this.onReceive);
     chrome.serial.onReceiveError.addListener(this.onError);
@@ -68,10 +79,25 @@ class App extends Component {
   }
 
   onReceive = (info) =>{
-    console.log(this.ab2str(info.data) );
-    const newLines = this.state.linesReceived +"\n"+ this.ab2str(info.data);
-    this.setState({
+
+
+    if(this.ab2str(info.data).indexOf("Finished") !== -1){
+        this.setState({
+            running: false
+        })
+    }
+
+    let st = this.ab2str(info.data).replace(/(\r\n|\n|\r)/gm, "");
+
+
+      let newLines = this.state.linesReceived +"\n"+ st;
+
+      this.setState({
       linesReceived: newLines
+    }, ()=>{
+            if(this.textLog.current){
+                this.textLog.current.scrollTop = this.textLog.current.scrollHeight;
+            }
     })
   };
 
@@ -82,8 +108,11 @@ class App extends Component {
   };
 
   onChange = (e) =>{
+     let value = e.target.value;
     this.setState({
-      selected: e.target.value
+      selected: value
+    }, ()=>{
+        localStorage.setItem('selectedPort', value)
     })
   };
 
@@ -106,10 +135,29 @@ class App extends Component {
      return String.fromCharCode.apply(null, new Uint8Array(buf));
    }
 
+
+   cancel = () =>{
+       this.send('C\n');
+       this.setState({
+           running: false
+       })
+
+   }
+
   send=(string)=>{
-    chrome.serial.send(this.state.connected, this.str2ab(string+"\n"), (sendInfo)=>{
-      console.log(sendInfo)
+
+       this.setState({
+           sending: true
+       })
+       let lines = string.split("\n");
+       lines.forEach((line)=>{
+           this.sleep(100);
+               chrome.serial.send(this.state.connected, this.str2ab("\n"+line+"\n"), (sendInfo)=>{
     })
+  })
+      this.setState({
+          sending: false
+      })
   }
 
    connect=()=> {
@@ -156,7 +204,14 @@ class App extends Component {
 
         return(string);
     };
-
+    sleep = (milliseconds)=> {
+        var start = new Date().getTime();
+        for (var i = 0; i < 1e7; i++) {
+            if ((new Date().getTime() - start) > milliseconds){
+                break;
+            }
+        }
+    }
    lines= (e)=>{
        console.log(e);
 this.setState({
@@ -168,11 +223,22 @@ this.setState({
             structure: e
         })};
 
-   run = () => {
-       let string = this.generateLines() + 'R;'+this.state.rounds+';'+this.state.roundDelay+'^'+(parseInt(this.state.rounds, 10)+parseInt(this.state.roundDelay, 10));
+   sendToDevice = () => {
+       let string = this.generateLines() +'\n';
 
        this.send(string);
    };
+
+   run = ()=>{
+
+       this.setState({
+           running: true
+       });
+
+       let string =  '\nR;'+this.state.rounds+';'+this.state.roundDelay+'^'+(parseInt(this.state.rounds, 10)+parseInt(this.state.roundDelay, 10))+'\n';
+       this.send(string);
+
+   }
 
    changeRounds =(e)=>{
        this.setState({
@@ -220,7 +286,6 @@ this.setState({
               </div></div>
 </div>
 
-           <button className={'btn btn-primary'} onClick={this.deleteText} > Delete text </button>
             <div className={'timeContainer'}>
 
                     <TimeCreator struc={this.state.struc} json={this.json}
@@ -228,18 +293,24 @@ this.setState({
 
             </div>
             <div className={'footerContainer row'}>
-                <div className={'col-6'}>
-                    <textarea disabled={true} style={{width: '100%', height: '100%'}}>
-                      {this.state.linesReceived}
-                    </textarea>
+                <div className={'col-6 row'}>
+                    <div className={'col-9'}>
+                        <textarea ref={this.textLog} value={this.state.linesReceived} disabled={true} style={{width: '100%', height: '100%'}} />
+                    </div>
+                    <div className={'col-3'}>
+                        <button className={'btn btn-primary'} onClick={this.deleteText} > Delete text </button>
+                    </div>
                 </div>
                 <div className={'col-6'}>
                     <label>Rondas</label>
                     <input className="form-control col-4 offset-4" value={this.state.rounds} type={'text'} onChange={this.changeRounds}/>
                     <label>Delay</label>
                     <input className="form-control col-4 offset-4" value={this.state.roundsDelay}  type={'text'} onChange={this.changeRoundDelay}/>
-                    <button className={'btn btn-primary col-4'}  onClick={this.run} > Ejecutar </button>
-                </div>
+                    <button className={'btn btn-primary col-4'} disabled={this.state.sending}  onClick={this.run} > Ejecutar </button>
+                    <button className={'btn btn-primary col-4'} disabled={this.state.sending} onClick={this.sendToDevice} > Enviar </button>
+                    {/*this.state.running &&
+                    < button className={'btn btn-danger col-4'} disabled={this.state.sending} onClick={this.cancel} > Cancelar </button>
+                    */}</div>
 
             </div>
       </div>
