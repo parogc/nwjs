@@ -11,6 +11,10 @@
     height: 450px;
 }
 
+.form-control.inline{
+    width: unset;
+    display: unset;
+}
 .items {
     display: inline-block;
     border: 1px solid;
@@ -18,7 +22,7 @@
     border-radius: 5px;
     vertical-align:top;
     height: 100%;
-    width: 400px;
+    width: 282px;
     padding-bottom: 50px;
     position: relative;
 }
@@ -27,6 +31,16 @@
     position: absolute;
     width: 100%;
     bottom: 5px;
+    text-align: center;
+}
+.deviceButtons button, .deviceButtons label{
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+}
+
+button, label{
+    margin-right: 5px !important;
+    margin-left: 5px !important;
 }
 
 .actionLine{
@@ -34,8 +48,9 @@
 }
 
 .topContainer {
+    text-align: left;
     width: 100%;
-    height: 100px;
+    height: 65px;
     padding: 10px;
     background: red;
 }
@@ -49,12 +64,12 @@
     bottom: 0;
     width: 100%;
     padding: 10px;
-    height: 200px;
+    height: 65px;
     background: green;
 }
 
 select.selectDevice {
-    height: 100%;
+    height: 38px;
 }
 
 .timecreator {
@@ -63,4 +78,23 @@ select.selectDevice {
 
 .deviceForm{
     text-align: center;
+}
+
+
+input.deviceInput, .withBorder {
+    width: 110px;
+    margin: 5px;
+    border: 1px solid;
+    border-radius: 7px;
+    padding-left: 5px;
+}
+
+.withBorder{
+    width: calc(100% - 10px);
+    display: block;
+}
+.actionLine{
+    background: #ccc;
+    padding-left: 10px;
+    padding-right: 10px;
 }

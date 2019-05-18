@@ -100,44 +100,40 @@ class TimeCreator extends Component {
                         return(
                             <div className={'items'} key={i}>
                                   <div className={'deviceForm'}>
-                                      device {i}
-                                    type:
-                                   <select value={device.type} onChange={(e)=>this.changeDeviceType(e, i)}>
+                                      device {i} {' '}type:{' '}
+                                   <select defaultValue={device.type} onChange={(e)=>this.changeDeviceType(e, i)}>
                                         <option value={'F'}>Flash</option>
                                         <option value={'V'}>Valve</option>
                                         <option value={'C'}>Camera</option>
                                         <option value={'B'}>Button</option>
                                    </select></div>
-                                        <div className={'container'}>
 
                                         {device.actions.map((action, j)=>{
                                             return(
-                                                    <div className={'row actionLine'}  key={i+''+j}>
-                                                        <input type={'text'} className="form-control col-5" value={action.delay} onChange={(e)=>this.changeActionDelay(e, i, j)}/>
-                                                        <input type={'text'} className="form-control col-5" value={action.duration} onChange={(e)=>this.changeActionDuration(e, i, j)}/>
-                                                        <button className={'btn btn-primary col-2'} onClick={()=>this.removeAction(i, j)}>X</button>
+                                                    <div className={'actionLine'}  key={i+''+j}>
+                                                        <input className={'deviceInput'} type={'number'} placeholder={'Delay'} value={action.delay} onChange={(e)=>this.changeActionDelay(e, i, j)}/>
+                                                        <input className={'deviceInput'} type={'number'} placeholder={'Duration'}  value={action.duration} onChange={(e)=>this.changeActionDuration(e, i, j)}/>
+                                                        <span className={'removeAction'} onClick={()=>this.removeAction(i, j)}>X</span>
                                                     </div>
                                             )
 
                                         })}
-                                        </div>
 
-                                        <div className={'deviceButtons container '}>
-                                            <div className={'row'} style={{textAlign: 'center'}}>
-                                        <button className={'btn btn-primary col-12'} onClick={()=>this.addAction(i)}>ADD ACTION</button>
-                                        <button className={'btn btn-primary col-12'} onClick={()=>this.removeDevice(i)}> REMOVE DEVICE </button>
-                                                <label style={{textAlign: 'center', width: '100%'}}> Pin Number </label>
-                                                <input type={'text'} className="form-control col-12" value={device.pin} onChange={(e)=>this.changeDevicePin(e, i)}/>
+                                        <div className={'deviceButtons'}>
+                                            <div style={{textAlign: 'center'}}>
+                                                <button onClick={()=>this.addAction(i)}>ADD ACTION</button>
+                                                <button onClick={()=>this.removeDevice(i)}> REMOVE DEVICE </button>
+                                                <input style={{textAlign: 'center'}} type={'text'} className={'devicePin withBorder'} placeholder={'Pin number'}  value={device.pin} onChange={(e)=>this.changeDevicePin(e, i)}/>
                                             </div>
                                         </div>
                             </div>
                         )
                     })}
                     <div>
-                        {/*<button className={'btn btn-primary'}  onClick={this.generateLines}>generateLines</button>*/}
+                        {/*<button  onClick={this.generateLines}>generateLines</button>*/}
                     </div>
                 </div>
-                <button className={'btn btn-primary'} onClick={this.addDevice}> ADD DEVICE </button>
+                <button onClick={this.addDevice}> ADD DEVICE </button>
             </div>
         );
     }
